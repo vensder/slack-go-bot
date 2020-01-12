@@ -68,6 +68,14 @@ func main() {
 	fmt.Println("channelChIDMap:", channelChIDMap)
 	fmt.Println("chIDChannelMap:", chIDChannelMap)
 
+	users, err := api.GetUsers()
+	if err != nil {
+		fmt.Printf("%s\n", err)
+	}
+	for _, user := range users {
+		fmt.Println(user.Name, user.RealName, user.ID)
+	}
+
 	for msg := range rtm.IncomingEvents {
 		fmt.Print("Event Received: ")
 		switch ev := msg.Data.(type) {

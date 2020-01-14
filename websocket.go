@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 
 	"github.com/nlopes/slack"
@@ -31,12 +32,28 @@ func (c *conf) getConf() *conf {
 	return c
 }
 
+// Get preferred outbound ip of this machine
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
+
 func main() {
 
 	var c conf
 	c.getConf()
 
 	fmt.Printf("Admin: %v, Channel: %v\n", c.Admin, c.Channel)
+
+	outboundIP := GetOutboundIP()
+	fmt.Printf("Outbound IP: %v\n", outboundIP)
 
 	channelChIDMap := make(map[string]string)
 	chIDChannelMap := make(map[string]string)

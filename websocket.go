@@ -52,7 +52,7 @@ func main() {
 
 	fmt.Printf("Admin: %v, Channel: %v\n", c.Admin, c.Channel)
 
-	outboundIP := GetOutboundIP()
+	outboundIP := fmt.Sprintf("%v", GetOutboundIP())
 	fmt.Printf("Outbound IP: %v\n", outboundIP)
 
 	channelChIDMap := make(map[string]string)
@@ -97,7 +97,7 @@ func main() {
 		fmt.Print("Event Received: ")
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
-			fmt.Printf("Message: %v\n", ev)
+			fmt.Printf("Hello event: %v\n", ev)
 			rtm.SendMessage(rtm.NewOutgoingMessage("slack.HelloEvent msg", channelChIDMap[c.Channel]))
 
 		case *slack.ConnectedEvent:
@@ -107,6 +107,12 @@ func main() {
 
 		case *slack.MessageEvent:
 			fmt.Printf("Message: %v\n", ev)
+			fmt.Println("Msg:", ev.Msg)
+			fmt.Println("Msg.User:", ev.Msg.User)
+			fmt.Println("Text:", ev.Text)
+			if ev.Msg.User == c.Admin && ev.Text == "!ip" {
+				rtm.SendMessage(rtm.NewOutgoingMessage("my ip: "+string(outboundIP), channelChIDMap[c.Channel]))
+			}
 
 		case *slack.PresenceChangeEvent:
 			fmt.Printf("Presence Change: %v\n", ev)

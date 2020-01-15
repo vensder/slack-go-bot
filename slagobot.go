@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -18,22 +19,21 @@ type conf struct {
 	Channel string `yaml:"channel"`
 }
 
-func (c *conf) getConf() *conf {
-
-	yamlFile, err := ioutil.ReadFile("config.yaml")
+func (c *conf) getConf(configPath string) *conf {
+	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
+		log.Printf("Read config error: %v\n", err)
 	}
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
+		// log.Fatalf("Unmarshal: %v", err)
+		log.Printf("Unmarshal error: %v\n", err)
 	}
 
 	return c
 }
 
-// Get preferred outbound ip of this machine
-func GetOutboundIP() net.IP {
+func getOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
@@ -46,14 +46,16 @@ func GetOutboundIP() net.IP {
 }
 
 func main() {
+	configPathPtr := flag.String("config-path", "config.yaml", "path to the config file")
+	flag.Parse()
 	var defaultChannelName string = "random"
 	var defaultChannelID string
-	var c conf
+	var configuration conf
 	channelChIDMap := make(map[string]string)
 	chIDChannelMap := make(map[string]string)
 
-	c.getConf()
-	outboundIP := fmt.Sprintf("%v", GetOutboundIP())
+	configuration.getConf(*configPathPtr)
+	outboundIP := fmt.Sprintf("%v", getOutboundIP())
 	fmt.Printf("Outbound IP: %v\n", outboundIP)
 
 	slackToken, ok := os.LookupEnv("SLACK_TOKEN")
@@ -84,13 +86,13 @@ func main() {
 	fmt.Println("channelChIDMap:", channelChIDMap)
 	fmt.Println("chIDChannelMap:", chIDChannelMap)
 
-	if c.Channel != "" {
-		defaultChannelName = c.Channel
+	if configuration.Channel != "" {
+		defaultChannelName = configuration.Channel
 	}
 
 	defaultChannelID = channelChIDMap[defaultChannelName]
 
-	fmt.Printf("Admin: %v, Channel: %v\n", c.Admin, c.Channel)
+	fmt.Printf("Admin: %v, Default channel: %v\n", configuration.Admin, configuration.Channel)
 
 	users, err := api.GetUsers()
 	if err != nil {
@@ -117,7 +119,7 @@ func main() {
 			fmt.Println("Msg:", ev.Msg)
 			fmt.Println("Msg.User:", ev.Msg.User)
 			fmt.Println("Text:", ev.Text)
-			if ev.Msg.User == c.Admin && ev.Text == "!ip" {
+			if ev.Msg.User == configuration.Admin && ev.Text == "!ip" {
 				rtm.SendMessage(rtm.NewOutgoingMessage("my ip: "+string(outboundIP), defaultChannelID))
 			}
 

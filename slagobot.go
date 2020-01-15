@@ -47,7 +47,9 @@ func getOutboundIP() net.IP {
 
 func main() {
 	configPathPtr := flag.String("config-path", "config.yaml", "path to the config file")
+	slackTokenPtr := flag.String("slack-token", "xoxb", "slack bot token")
 	flag.Parse()
+	var slackToken string
 	var defaultChannelName string = "random"
 	var defaultChannelID string
 	var configuration conf
@@ -58,11 +60,27 @@ func main() {
 	outboundIP := fmt.Sprintf("%v", getOutboundIP())
 	fmt.Printf("Outbound IP: %v\n", outboundIP)
 
-	slackToken, ok := os.LookupEnv("SLACK_TOKEN")
-	if !ok {
-		fmt.Printf("SLACK_TOKEN environment variable is not set\n")
-		os.Exit(1)
+	if *slackTokenPtr == "xoxb" {
+		fmt.Println("slack-token flag not passed")
+		fmt.Println("checking environment variable...")
+		var ok bool
+		slackToken, ok = os.LookupEnv("SLACK_TOKEN")
+		if !ok {
+			fmt.Println("SLACK_TOKEN environment variable is not set")
+			os.Exit(1)
+
+		}
+	} else {
+		slackToken = *slackTokenPtr
 	}
+
+	// slackToken, ok := os.LookupEnv("SLACK_TOKEN")
+	// if !ok {
+	// 	fmt.Println("SLACK_TOKEN environment variable is not set")
+	// } else if *slackTokenPtr == "xoxb" {
+	// 	fmt.Println("slack-token flag not passed")
+	// 	os.Exit(1)
+	// }
 
 	api := slack.New(
 		slackToken,

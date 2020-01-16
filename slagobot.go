@@ -73,14 +73,6 @@ func main() {
 		slackToken = *slackTokenPtr
 	}
 
-	// slackToken, ok := os.LookupEnv("SLACK_TOKEN")
-	// if !ok {
-	// 	fmt.Println("SLACK_TOKEN environment variable is not set")
-	// } else if *slackTokenPtr == "xoxb" {
-	// 	fmt.Println("slack-token flag not passed")
-	// 	os.Exit(1)
-	// }
-
 	api := slack.New(
 		slackToken,
 		slack.OptionDebug(true),

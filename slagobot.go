@@ -33,16 +33,15 @@ func (c *conf) getConf(configPath string) *conf {
 	return c
 }
 
-func getOutboundIP() net.IP {
+func getOutboundIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Getting outbound address error: %v\n", err)
+		return "can't determinate IP address"
 	}
 	defer conn.Close()
-
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	return localAddr.IP
+	return fmt.Sprintf("%v", localAddr.IP)
 }
 
 func main() {
@@ -57,7 +56,7 @@ func main() {
 	chIDChannelMap := make(map[string]string)
 
 	configuration.getConf(*configPathPtr)
-	outboundIP := fmt.Sprintf("%v", getOutboundIP())
+	outboundIP := getOutboundIP()
 	fmt.Printf("Outbound IP: %v\n", outboundIP)
 
 	if *slackTokenPtr == "xoxb" {

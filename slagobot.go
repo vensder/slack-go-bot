@@ -12,8 +12,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// var channelChIDMap map[string]string
-
 type conf struct {
 	Admin   string `yaml:"admin"`
 	Channel string `yaml:"channel"`
@@ -52,6 +50,8 @@ func main() {
 	var defaultChannelName string = "random"
 	var defaultChannelID string
 	var configuration conf
+	// var currentLatency time.Duration
+	var currentLatencyStr string = "Not checked yet"
 	channelChIDMap := make(map[string]string)
 	chIDChannelMap := make(map[string]string)
 
@@ -65,7 +65,7 @@ func main() {
 		var ok bool
 		slackToken, ok = os.LookupEnv("SLACK_TOKEN")
 		if !ok {
-			fmt.Println("SLACK_TOKEN environment variable is not set")
+			fmt.Println("SLACK_TOKEN environment variable is not set too")
 			os.Exit(1)
 
 		}
@@ -101,7 +101,9 @@ func main() {
 
 	defaultChannelID = channelChIDMap[defaultChannelName]
 
-	fmt.Printf("Admin: %v, Default channel: %v\n", configuration.Admin, configuration.Channel)
+	fmt.Printf("Admin: %v, Default channel: %v\n",
+		configuration.Admin,
+		configuration.Channel)
 
 	users, err := api.GetUsers()
 	if err != nil {
@@ -116,28 +118,33 @@ func main() {
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
 			fmt.Printf("Hello event: %v\n", ev)
-			rtm.SendMessage(rtm.NewOutgoingMessage("slack.HelloEvent msg", defaultChannelID))
+			rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("I'm running. My IP is %s",
+				outboundIP),
+				defaultChannelID))
 
 		case *slack.ConnectedEvent:
 			fmt.Println("Infos:", ev.Info)
 			fmt.Println("Connection counter:", ev.ConnectionCount)
-			rtm.SendMessage(rtm.NewOutgoingMessage("slack.ConnectedEvent msg", defaultChannelID))
+			rtm.SendMessage(rtm.NewOutgoingMessage("Hi, I'm connected!", defaultChannelID))
 
 		case *slack.MessageEvent:
 			fmt.Printf("Message: %v\n", ev)
 			fmt.Println("Msg:", ev.Msg)
 			fmt.Println("Msg.User:", ev.Msg.User)
 			fmt.Println("Text:", ev.Text)
+
 			if ev.Msg.User == configuration.Admin && ev.Text == "!ip" {
-				rtm.SendMessage(rtm.NewOutgoingMessage("my ip: "+string(outboundIP), defaultChannelID))
+				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("My ip: %s. Latency: %v",
+					outboundIP, currentLatencyStr),
+					defaultChannelID))
 			}
 
 		case *slack.PresenceChangeEvent:
 			fmt.Printf("Presence Change: %v\n", ev)
 
 		case *slack.LatencyReport:
-			fmt.Printf("Current latency: %v\n", ev.Value)
-			rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("```Current latency: %v```", ev.Value), defaultChannelID))
+			currentLatencyStr = fmt.Sprintf("%v", ev.Value)
+			fmt.Printf("Current latency: %v\n", currentLatencyStr)
 
 		case *slack.DesktopNotificationEvent:
 			fmt.Printf("Desktop Notification: %v\n", ev)

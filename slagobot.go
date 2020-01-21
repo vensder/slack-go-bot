@@ -54,6 +54,7 @@ func main() {
 	var currentLatencyStr string = "Not checked yet"
 	channelChIDMap := make(map[string]string)
 	chIDChannelMap := make(map[string]string)
+	sendMessageAfterTypingMap := make(map[string]bool)
 
 	configuration.getConf(*configPathPtr)
 	outboundIP := getOutboundIP()
@@ -133,6 +134,8 @@ func main() {
 			fmt.Println("Msg.User:", ev.Msg.User)
 			fmt.Println("Text:", ev.Text)
 
+			sendMessageAfterTypingMap[ev.User] = true
+
 			if ev.Msg.User == configuration.Admin && ev.Text == "!ip" {
 				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("My ip: %s. Latency: %v",
 					outboundIP, currentLatencyStr),
@@ -156,9 +159,33 @@ func main() {
 			fmt.Printf("Invalid credentials")
 			return
 
+		case *slack.UserTypingEvent:
+			typingUserInfo, err := api.GetUserInfo(ev.User)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			}
+			typingUserRealName := typingUserInfo.RealName
+
+			fmt.Printf("User typing event: %v, User: %v, Real Name: %v\n",
+				ev,
+				ev.User,
+				typingUserRealName,
+			)
+
+			if sendMessageAfterTyping, ok := sendMessageAfterTypingMap[ev.User]; ok {
+				if sendMessageAfterTyping == true {
+					rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("Wow! %v is typing! Write something wisdom!",
+						typingUserRealName),
+						defaultChannelID))
+					sendMessageAfterTypingMap[ev.User] = false
+				}
+			} else {
+				sendMessageAfterTypingMap[ev.User] = true
+			}
+
 		default:
 			// Other events..
-			fmt.Printf("Unexpected: %v\n", msg.Data)
+			fmt.Printf("Unexpected event %v with content: %v\n", ev, msg.Data)
 		}
 	}
 }

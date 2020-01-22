@@ -3,5 +3,8 @@ admin:
   ULADGB59S
   # @malcolm wang 
   # UKZF5UBCJ
+admins:
+ - ULADGB59S
+ - UKZF5UBCJ
 channel:
   bots-testing

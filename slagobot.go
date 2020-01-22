@@ -13,8 +13,9 @@ import (
 )
 
 type conf struct {
-	Admin   string `yaml:"admin"`
-	Channel string `yaml:"channel"`
+	Admins  []string `yaml:"admins"`
+	Admin   string   `yaml:"admin"`
+	Channel string   `yaml:"channel"`
 }
 
 func (c *conf) getConf(configPath string) *conf {
@@ -102,9 +103,11 @@ func main() {
 
 	defaultChannelID = channelChIDMap[defaultChannelName]
 
-	fmt.Printf("Admin: %v, Default channel: %v\n",
+	fmt.Printf("Admin: %v, Default channel: %v, Admins: %v\n",
 		configuration.Admin,
-		configuration.Channel)
+		configuration.Channel,
+		configuration.Admins,
+	)
 
 	users, err := api.GetUsers()
 	if err != nil {

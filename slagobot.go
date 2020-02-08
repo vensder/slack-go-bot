@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/nlopes/slack"
 	"gopkg.in/yaml.v2"
@@ -142,6 +143,11 @@ func main() {
 			if ev.Msg.User == configuration.Admin && ev.Text == "!ip" {
 				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("My ip: %s. Latency: %v",
 					outboundIP, currentLatencyStr),
+					defaultChannelID))
+			}
+			if strings.HasPrefix(ev.Text, "!tr ") {
+				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("Translation of *%s*: xxxxx",
+					strings.Replace(ev.Text, "!tr ", "", 1)),
 					defaultChannelID))
 			}
 

@@ -1,10 +1,8 @@
 admin:
   # @dmitrii.makarov
-  ULADGB59S
-  # @malcolm wang 
-  # UKZF5UBCJ
+  UCAMBA2NR
 admins:
- - ULADGB59S
- - UKZF5UBCJ
+ - UCAMBA2NR
+ - UD0D95T0Q
 channel:
-  bots-testing
+  random

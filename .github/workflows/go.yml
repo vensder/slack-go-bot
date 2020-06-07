@@ -47,4 +47,4 @@ jobs:
       shell: bash
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }} 
-      run: { sleep 20; kill $$; } & go run slagobot.go
+      run: '{ sleep 20; kill $$; } & go run slagobot.go'

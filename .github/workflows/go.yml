@@ -36,12 +36,6 @@ jobs:
     - name: Test
       run: go test -v .
 
-
-  run:
-    name: Run
-    runs-on: ubuntu-latest
-    steps:
-
     - name: Run
       timeout-minutes: 1
       shell: bash

@@ -35,3 +35,10 @@ jobs:
 
     - name: Test
       run: go test -v .
+    
+    - name: Run
+      timeout-minutes: 3
+      shell: bash
+      env:
+        SLACK_TOKEN: ${{ secret.SLACK_TOKEN }} 
+      run: go run slagobot.go

@@ -44,6 +44,15 @@ func getOutboundIP() string {
 	return fmt.Sprintf("%v", localAddr.IP)
 }
 
+func getHostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		log.Printf("Getting hostname error: %v\n", err)
+		return "can't determinate hostname"
+	}
+	return fmt.Sprintf("%v", name)
+}
+
 func main() {
 	configPathPtr := flag.String("config-path", "config.yaml", "path to the config file")
 	slackTokenPtr := flag.String("slack-token", "xoxb", "slack bot token")
@@ -60,7 +69,9 @@ func main() {
 
 	configuration.getConf(*configPathPtr)
 	outboundIP := getOutboundIP()
+	hostname := getHostname()
 	fmt.Printf("Outbound IP: %v\n", outboundIP)
+	fmt.Printf("Hostname: %v\n", hostname)
 
 	if *slackTokenPtr == "xoxb" {
 		fmt.Println("slack-token flag not passed")

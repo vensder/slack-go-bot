@@ -70,8 +70,8 @@ func main() {
 	configuration.getConf(*configPathPtr)
 	outboundIP := getOutboundIP()
 	hostname := getHostname()
-	fmt.Printf("Outbound IP: %v\n", outboundIP)
-	fmt.Printf("Hostname: %v\n", hostname)
+	fmt.Printf("Outbound IP: %s\n", outboundIP)
+	fmt.Printf("Hostname: %s\n", hostname)
 
 	if *slackTokenPtr == "xoxb" {
 		fmt.Println("slack-token flag not passed")
@@ -134,8 +134,8 @@ func main() {
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
 			fmt.Printf("Hello event: %v\n", ev)
-			rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("I'm running. My IP is %s",
-				outboundIP),
+			rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("I'm running. My IP is %s, my hostname is %s",
+				outboundIP, hostname),
 				defaultChannelID))
 
 		case *slack.ConnectedEvent:

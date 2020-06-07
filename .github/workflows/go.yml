@@ -37,7 +37,7 @@ jobs:
       run: go test -v .
     
     - name: Run
-      timeout-minutes: 3
+      timeout-minutes: 1
       shell: bash
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }} 

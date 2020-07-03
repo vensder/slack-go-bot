@@ -169,9 +169,6 @@ func main() {
 			currentLatencyStr = fmt.Sprintf("%v", ev.Value)
 			fmt.Printf("Current latency: %v\n", currentLatencyStr)
 
-		case *slack.DesktopNotificationEvent:
-			fmt.Printf("Desktop Notification: %v\n", ev)
-
 		case *slack.RTMError:
 			fmt.Printf("Error: %s\n", ev.Error())
 

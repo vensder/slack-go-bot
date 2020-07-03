@@ -1,6 +1,6 @@
 # Golang Slack Bot
 
-![Go](https://github.com/vensder/slack-go-bot/workflows/Go/badge.svg) ![Docker](https://img.shields.io/docker/build/vensder/slack-go-bot)
+![Go](https://github.com/vensder/slack-go-bot/workflows/Go/badge.svg) [![Docker](https://img.shields.io/docker/build/vensder/slack-go-bot)](https://hub.docker.com/r/vensder/slack-go-bot)
 
 ## How to run pre-build docker
 

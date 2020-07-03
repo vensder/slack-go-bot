@@ -15,6 +15,11 @@ docker run --rm --name slagobot -d vensder/slack-go-bot
 
 ## How to run from source code
 
+```bash
+git clone https://github.com/vensder/slack-go-bot.git
+cd slack-go-bot
+```
+
 Run this bot and pass your Slack token:
 
 ```bash

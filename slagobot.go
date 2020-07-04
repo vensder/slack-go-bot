@@ -46,7 +46,7 @@ func getOutboundIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Printf("Getting outbound address error: %v\n", err)
-		return "can't determinate outbound IP address"
+		return "Can't obtain the outbound IP address"
 	}
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
@@ -57,7 +57,7 @@ func getExternalIP() string {
 	resp, err := http.Get("http://checkip.amazonaws.com")
 	if err != nil {
 		log.Printf("Error during the get request to checkip.amazonaws.com: %v\n", err)
-		return "Can't determine the external IP address"
+		return "Can't obtain the external IP address"
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

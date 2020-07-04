@@ -3,11 +3,13 @@ name: Go
 on:
   push:
     paths-ignore:
-      - README.*
+      - 'README.*'
+      - 'img/**'
     branches: [master]
   pull_request:
     paths-ignore:
-      - README.*
+      - 'README.*'
+      - 'img/**'
     branches: [master]
 
 jobs:

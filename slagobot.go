@@ -224,6 +224,7 @@ func main() {
 				fmt.Printf("%s\n", err)
 			}
 			typingUserRealName := typingUserInfo.RealName
+			typingUserChannel := ev.Channel
 
 			fmt.Printf("User typing event: %v, User: %v, Real Name: %v\n",
 				ev,
@@ -233,9 +234,9 @@ func main() {
 
 			if sendMessageAfterTyping, ok := sendMessageAfterTypingMap[ev.User]; ok {
 				if sendMessageAfterTyping == true {
-					rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("Wow! %v is typing! Write something wisdom!",
+					rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("Wow! %v is typing! Say something wisdom!",
 						typingUserRealName),
-						defaultChannelID))
+						typingUserChannel))
 					sendMessageAfterTypingMap[ev.User] = false
 				}
 			} else {

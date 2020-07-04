@@ -6,11 +6,20 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	templateReport = `
+_My external IP is_: *%s*
+_My outbound IP is_: *%s*
+_My hostname is_: *%s*
+_My latency is_: *%s*`
 )
 
 type conf struct {
@@ -37,18 +46,34 @@ func getOutboundIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Printf("Getting outbound address error: %v\n", err)
-		return "can't determinate IP address"
+		return "Can't obtain the outbound IP address"
 	}
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return fmt.Sprintf("%v", localAddr.IP)
 }
 
+func getExternalIP() string {
+	resp, err := http.Get("http://checkip.amazonaws.com")
+	if err != nil {
+		log.Printf("Error during the get request to checkip.amazonaws.com: %v\n", err)
+		return "Can't obtain the external IP address"
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error during the response body reading: %v\n", err)
+		return "Can't read response body"
+	}
+	log.Println(string(body))
+	return strings.TrimSpace(string(body))
+}
+
 func getHostname() string {
 	name, err := os.Hostname()
 	if err != nil {
 		log.Printf("Getting hostname error: %v\n", err)
-		return "can't determinate hostname"
+		return "can't obtain hostname"
 	}
 	return fmt.Sprintf("%v", name)
 }
@@ -69,8 +94,10 @@ func main() {
 
 	configuration.getConf(*configPathPtr)
 	outboundIP := getOutboundIP()
+	externalIP := getExternalIP()
 	hostname := getHostname()
 	fmt.Printf("Outbound IP: %s\n", outboundIP)
+	fmt.Printf("External IP: %s\n", externalIP)
 	fmt.Printf("Hostname: %s\n", hostname)
 
 	if *slackTokenPtr == "xoxb" {
@@ -134,8 +161,12 @@ func main() {
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
 			fmt.Printf("Hello event: %v\n", ev)
-			rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("I'm running. My IP is %s, my hostname is %s",
-				outboundIP, hostname),
+			rtm.SendMessage(rtm.NewOutgoingMessage(
+				fmt.Sprintf(templateReport,
+					outboundIP,
+					externalIP,
+					hostname,
+					currentLatencyStr),
 				defaultChannelID))
 
 		case *slack.ConnectedEvent:
@@ -156,6 +187,14 @@ func main() {
 					outboundIP, currentLatencyStr),
 					defaultChannelID))
 			}
+			if ev.Msg.User == configuration.Admin && ev.Text == "!report" {
+				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf(templateReport,
+					outboundIP,
+					externalIP,
+					hostname,
+					currentLatencyStr),
+					defaultChannelID))
+			}
 			if strings.HasPrefix(ev.Text, "!tr ") {
 				rtm.SendMessage(rtm.NewOutgoingMessage(fmt.Sprintf("Translation of *%s*: xxxxx",
 					strings.Replace(ev.Text, "!tr ", "", 1)),
@@ -169,8 +208,11 @@ func main() {
 			currentLatencyStr = fmt.Sprintf("%v", ev.Value)
 			fmt.Printf("Current latency: %v\n", currentLatencyStr)
 
+		case *slack.DesktopNotificationEvent:
+			fmt.Printf("Desktop Notification: %v\n", ev)
+
 		case *slack.RTMError:
-			fmt.Printf("Error: %s\n", ev.Error())
+			fmt.Printf("RTM Error: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
 			fmt.Printf("Invalid credentials")

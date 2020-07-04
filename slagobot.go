@@ -63,6 +63,7 @@ func getExternalIP() string {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error during the response body reading: %v\n", err)
+		return "Can't read response body"
 	}
 	log.Println(string(body))
 	return strings.TrimSpace(string(body))
@@ -72,7 +73,7 @@ func getHostname() string {
 	name, err := os.Hostname()
 	if err != nil {
 		log.Printf("Getting hostname error: %v\n", err)
-		return "can't determinate hostname"
+		return "can't obtain hostname"
 	}
 	return fmt.Sprintf("%v", name)
 }

@@ -16,8 +16,8 @@ import (
 
 const (
 	templateReport = `
-_My external IP is_: *%s*
 _My outbound IP is_: *%s*
+_My external IP is_: *%s*
 _My hostname is_: *%s*
 _My latency is_: *%s*`
 )

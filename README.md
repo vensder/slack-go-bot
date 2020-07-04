@@ -15,6 +15,9 @@ export SLACK_TOKEN='xoxb-000000-xxxxxxxx-xxxxxxxxxxxxxxx'
 docker run --rm --name slagobot -d vensder/slack-go-bot
 ```
 
+![alt text](./img/screenshot_1.png?raw=true)
+
+
 ## How to run from source code
 
 ```bash

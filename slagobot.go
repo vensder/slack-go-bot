@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -19,7 +20,8 @@ const (
 _My outbound IP is_: *%s*
 _My external IP is_: *%s*
 _My hostname is_: *%s*
-_My latency is_: *%s*`
+_My latency is_: *%s*
+_Runtime OS/Arch_: *%s*`
 )
 
 type conf struct {
@@ -78,6 +80,10 @@ func getHostname() string {
 	return fmt.Sprintf("%v", name)
 }
 
+func getOsArch() string {
+	return fmt.Sprintf("%v/%v", runtime.GOOS, runtime.GOARCH)
+}
+
 func main() {
 	configPathPtr := flag.String("config-path", "config.yaml", "path to the config file")
 	slackTokenPtr := flag.String("slack-token", "xoxb", "slack bot token")
@@ -96,6 +102,7 @@ func main() {
 	outboundIP := getOutboundIP()
 	externalIP := getExternalIP()
 	hostname := getHostname()
+	osNameArch := getOsArch()
 	fmt.Printf("Outbound IP: %s\n", outboundIP)
 	fmt.Printf("External IP: %s\n", externalIP)
 	fmt.Printf("Hostname: %s\n", hostname)
@@ -166,7 +173,8 @@ func main() {
 					outboundIP,
 					externalIP,
 					hostname,
-					currentLatencyStr),
+					currentLatencyStr,
+					osNameArch),
 				defaultChannelID))
 
 		case *slack.ConnectedEvent:
@@ -192,7 +200,8 @@ func main() {
 					outboundIP,
 					externalIP,
 					hostname,
-					currentLatencyStr),
+					currentLatencyStr,
+					osNameArch),
 					defaultChannelID))
 			}
 			if strings.HasPrefix(ev.Text, "!tr ") {

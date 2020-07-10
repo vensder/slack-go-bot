@@ -37,7 +37,6 @@ func (c *conf) getConf(configPath string) *conf {
 	}
 	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
-		// log.Fatalf("Unmarshal: %v", err)
 		log.Printf("Unmarshal error: %v\n", err)
 	}
 
@@ -48,7 +47,7 @@ func getOutboundIP() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Printf("Getting outbound address error: %v\n", err)
-		return "Can't obtain the outbound IP address"
+		return fmt.Sprintf("Can't obtain the outbound IP address, got error: ```%v```", err)
 	}
 	defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
@@ -56,10 +55,11 @@ func getOutboundIP() string {
 }
 
 func getExternalIP() string {
-	resp, err := http.Get("http://checkip.amazonaws.com")
+	checkerURL := "http://checkip.amazonaws.com"
+	resp, err := http.Get(checkerURL)
 	if err != nil {
-		log.Printf("Error during the get request to checkip.amazonaws.com: %v\n", err)
-		return "Can't obtain the external IP address"
+		log.Printf("Error during the get request to %s: %v\n", checkerURL, err)
+		return fmt.Sprintf("Can't obtain the external IP address, got error: ```%v```", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -67,7 +67,6 @@ func getExternalIP() string {
 		log.Printf("Error during the response body reading: %v\n", err)
 		return "Can't read response body"
 	}
-	log.Println(string(body))
 	return strings.TrimSpace(string(body))
 }
 
@@ -75,13 +74,20 @@ func getHostname() string {
 	name, err := os.Hostname()
 	if err != nil {
 		log.Printf("Getting hostname error: %v\n", err)
-		return "can't obtain hostname"
+		return fmt.Sprintf("Can't obtain hostname, got error: ```%v```", err)
 	}
 	return fmt.Sprintf("%v", name)
 }
 
 func getOsArch() string {
 	return fmt.Sprintf("%v/%v", runtime.GOOS, runtime.GOARCH)
+}
+
+func init() {
+	log.SetPrefix(":LOG: ")
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Ldate | log.Llongfile | log.LstdFlags)
+	log.Println("init started")
 }
 
 func main() {
@@ -92,7 +98,6 @@ func main() {
 	var defaultChannelName string = "random"
 	var defaultChannelID string
 	var configuration conf
-	// var currentLatency time.Duration
 	var currentLatencyStr string = "Not checked yet"
 	channelChIDMap := make(map[string]string)
 	chIDChannelMap := make(map[string]string)
@@ -103,17 +108,17 @@ func main() {
 	externalIP := getExternalIP()
 	hostname := getHostname()
 	osNameArch := getOsArch()
-	fmt.Printf("Outbound IP: %s\n", outboundIP)
-	fmt.Printf("External IP: %s\n", externalIP)
-	fmt.Printf("Hostname: %s\n", hostname)
+	log.Printf("Outbound IP: %s\n", outboundIP)
+	log.Printf("External IP: %s\n", externalIP)
+	log.Printf("Hostname: %s\n", hostname)
 
 	if *slackTokenPtr == "xoxb" {
-		fmt.Println("slack-token flag not passed")
-		fmt.Println("checking environment variable...")
+		log.Println("slack-token flag not passed")
+		log.Println("checking environment variable...")
 		var ok bool
 		slackToken, ok = os.LookupEnv("SLACK_TOKEN")
 		if !ok {
-			fmt.Println("SLACK_TOKEN environment variable is not set too")
+			log.Println("SLACK_TOKEN environment variable is not set too")
 			os.Exit(1)
 
 		}
@@ -124,7 +129,7 @@ func main() {
 	api := slack.New(
 		slackToken,
 		slack.OptionDebug(true),
-		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
+		//slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
 
 	rtm := api.NewRTM()
@@ -132,16 +137,16 @@ func main() {
 
 	channels, err := api.GetChannels(false)
 	if err != nil {
-		fmt.Printf("%s\n", err)
+		log.Printf("%s\n", err)
 		return
 	}
 	for _, channel := range channels {
-		fmt.Println(channel.Name, channel.ID)
+		log.Println(channel.Name, channel.ID)
 		channelChIDMap[channel.Name] = channel.ID
 		chIDChannelMap[channel.ID] = channel.Name
 	}
-	fmt.Println("channelChIDMap:", channelChIDMap)
-	fmt.Println("chIDChannelMap:", chIDChannelMap)
+	log.Println("channelChIDMap:", channelChIDMap)
+	log.Println("chIDChannelMap:", chIDChannelMap)
 
 	if configuration.Channel != "" {
 		defaultChannelName = configuration.Channel
@@ -149,7 +154,7 @@ func main() {
 
 	defaultChannelID = channelChIDMap[defaultChannelName]
 
-	fmt.Printf("Admin: %v, Default channel: %v, Admins: %v\n",
+	log.Printf("Admin: %v, Default channel: %v, Admins: %v\n",
 		configuration.Admin,
 		configuration.Channel,
 		configuration.Admins,
@@ -157,17 +162,17 @@ func main() {
 
 	users, err := api.GetUsers()
 	if err != nil {
-		fmt.Printf("%s\n", err)
+		log.Printf("%s\n", err)
 	}
 	for _, user := range users {
-		fmt.Println(user.Name, user.RealName, user.ID)
+		log.Println(user.Name, user.RealName, user.ID)
 	}
 
 	for msg := range rtm.IncomingEvents {
-		fmt.Print("Event Received: ")
+		log.Print("Event Received: ")
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
-			fmt.Printf("Hello event: %v\n", ev)
+			log.Printf("Hello event: %v\n", ev)
 			rtm.SendMessage(rtm.NewOutgoingMessage(
 				fmt.Sprintf(templateReport,
 					outboundIP,
@@ -178,15 +183,15 @@ func main() {
 				defaultChannelID))
 
 		case *slack.ConnectedEvent:
-			fmt.Println("Infos:", ev.Info)
-			fmt.Println("Connection counter:", ev.ConnectionCount)
+			log.Println("Infos:", ev.Info)
+			log.Println("Connection counter:", ev.ConnectionCount)
 			rtm.SendMessage(rtm.NewOutgoingMessage("Hi, I'm connected!", defaultChannelID))
 
 		case *slack.MessageEvent:
-			fmt.Printf("Message: %v\n", ev)
-			fmt.Println("Msg:", ev.Msg)
-			fmt.Println("Msg.User:", ev.Msg.User)
-			fmt.Println("Text:", ev.Text)
+			log.Printf("Message: %v\n", ev)
+			log.Println("Msg:", ev.Msg)
+			log.Println("Msg.User:", ev.Msg.User)
+			log.Println("Text:", ev.Text)
 
 			sendMessageAfterTypingMap[ev.User] = true
 
@@ -211,31 +216,31 @@ func main() {
 			}
 
 		case *slack.PresenceChangeEvent:
-			fmt.Printf("Presence Change: %v\n", ev)
+			log.Printf("Presence Change: %v\n", ev)
 
 		case *slack.LatencyReport:
 			currentLatencyStr = fmt.Sprintf("%v", ev.Value)
-			fmt.Printf("Current latency: %v\n", currentLatencyStr)
+			log.Printf("Current latency: %v\n", currentLatencyStr)
 
 		case *slack.DesktopNotificationEvent:
-			fmt.Printf("Desktop Notification: %v\n", ev)
+			log.Printf("Desktop Notification: %v\n", ev)
 
 		case *slack.RTMError:
-			fmt.Printf("RTM Error: %s\n", ev.Error())
+			log.Printf("RTM Error: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			fmt.Printf("Invalid credentials")
+			log.Printf("Invalid credentials")
 			return
 
 		case *slack.UserTypingEvent:
 			typingUserInfo, err := api.GetUserInfo(ev.User)
 			if err != nil {
-				fmt.Printf("%s\n", err)
+				log.Printf("%s\n", err)
 			}
 			typingUserRealName := typingUserInfo.RealName
 			typingUserChannel := ev.Channel
 
-			fmt.Printf("User typing event: %v, User: %v, Real Name: %v\n",
+			log.Printf("User typing event: %v, User: %v, Real Name: %v\n",
 				ev,
 				ev.User,
 				typingUserRealName,
@@ -254,7 +259,7 @@ func main() {
 
 		default:
 			// Other events..
-			fmt.Printf("Unexpected event %v with content: %v\n", ev, msg.Data)
+			log.Printf("Unexpected event %v with content: %v\n", ev, msg.Data)
 		}
 	}
 }

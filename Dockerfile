@@ -11,7 +11,10 @@ COPY go.mod go.sum slagobot.go ./
 RUN go build -o slagobot -v -x slagobot.go && chmod +x slagobot
 
 FROM alpine:3.12
-RUN addgroup -S app && adduser -S app -G app
+RUN apk update \
+    && apk add ca-certificates \
+    && rm -rf /var/chache/apk/* \
+    && addgroup -S app && adduser -S app -G app
 USER app
 WORKDIR /app
 COPY --from=builder /app/slagobot .

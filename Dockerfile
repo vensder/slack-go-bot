@@ -8,9 +8,7 @@ ENV CGO_ENABLED=0 \
 WORKDIR /app
 
 COPY go.mod go.sum slagobot.go ./
-
 RUN go build -o slagobot -v -x slagobot.go && chmod +x slagobot
-
 
 FROM alpine:3.12
 RUN apk update \
@@ -18,9 +16,6 @@ RUN apk update \
     && rm -rf /var/chache/apk/* \
     && addgroup -S app && adduser -S app -G app
 USER app
-
 WORKDIR /app
-
 COPY --from=builder /app/slagobot .
-
 ENTRYPOINT ["./slagobot"]
